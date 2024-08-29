@@ -11,12 +11,46 @@ api = Blueprint('api', __name__)
 # Allow CORS requests to this API
 CORS(api)
 
+@api.route('/signup', methods=['GET', 'POST'])
+def signup():
+    response_body = {}
+    email = request.json.get("email", None).lower()
+    password = request.json.get("password", None)
+    user = User()
+    user.email = email
+    user.password = password
+    user.is_active = True
+    db.session.add(user)
+    db.session.commit()
+    access_token = create_access_token(identity={ 'user_id': user.id,
+                                                  'user_is_admin': user.is_admin})
+    response_body['message'] = 'User Signed Up'
+    response_body['access_token'] = access_token
+    response_body['results']=user.serialize()
+    return response_body, 200
 
-@api.route('/hello', methods=['POST', 'GET'])
-def handle_hello():
 
-    response_body = {
-        "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
-    }
+@api.route('/login', methods=['GET','POST'])
+def login(): 
+    response_body = {}
+    email = request.json.get("email", None).lower()
+    password = request.json.get("password", None)
+    user = db.session.execute(db.select(Users).where(Users.email == email, Users.password == password, Users.is_active == True, )).scalar()
+    print(user)
+    if user: 
+        access_token = create_access_token(identity={ 'user_id': user.id})
+        response_body['message'] = 'User logged in'
+        response_body['access_token'] = access_token
+        response_body['results'] = user.serialize()
+        return response_body, 200
+    response_body['message'] = 'Wrong Username Or Password'
+    return response_body, 401
 
-    return jsonify(response_body), 200
+@api.route('/users', methods=['GET'])
+def handle_users():
+    response_body = {}
+    rows = db.session.execute(db.select(User)).scalars()
+    results = [row.serialize() for row in rows]
+    response_body['results'] = results
+    response_body['message'] = 'User List'
+    return response_body, 200
