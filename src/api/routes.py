@@ -35,12 +35,12 @@ def login():
     response_body = {}
     email = request.json.get("email", None).lower()
     password = request.json.get("password", None)
-    user = db.session.execute(db.select(Users).where(Users.email == email, Users.password == password, Users.is_active == True, )).scalar()
+    user = db.session.execute(db.select(User).where(User.email == email, User.password == password, User.is_active == True, )).scalar()
     print(user)
     if user: 
-        access_token = create_access_token(identity={ 'user_id': user.id})
+       
         response_body['message'] = 'User logged in'
-        response_body['access_token'] = access_token
+  
         response_body['results'] = user.serialize()
         return response_body, 200
     response_body['message'] = 'Wrong Username Or Password'
@@ -54,3 +54,8 @@ def handle_users():
     response_body['results'] = results
     response_body['message'] = 'User List'
     return response_body, 200
+
+@api.route('/logout')  
+def logout():
+    session.clear()
+    return redirect(url_for('home'))

@@ -39,9 +39,8 @@ export const Login = () => {
     console.log(data);
     localStorage.setItem('token', data.access_token)
     localStorage.setItem('user', JSON.stringify(data.results))
-    actions.setIsLogin(true)
-    actions.setCurrentUser(data.results)
-    navigate('/')
+
+    navigate('/private')
   };
 
   return (
